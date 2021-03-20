@@ -1,0 +1,123 @@
+call plug#begin('~/.vim/plugged')
+
+Plug 'kana/vim-operator-user'
+
+"File manager
+Plug 'scrooloose/nerdtree', { 'on':  'NERDTreeToggle' }
+
+"Auto fill pairs for symbols like '', "", (), {}, etc..
+Plug 'jiangmiao/auto-pairs'
+
+"Quick file search
+Plug 'ctrlpvim/ctrlp.vim'
+
+"Quick jump to symbol
+Plug 'easymotion/vim-easymotion'
+
+"UI Plugin
+Plug 'morhetz/gruvbox'
+Plug 'ryanoasis/vim-devicons'
+
+"Boosted vimgrep
+Plug 'rking/ag.vim'
+
+Plug 'rhysd/vim-clang-format'
+
+"Linux kernel checkpatch
+"Plug 'Deedone/checkpatch.nvim', { 'do': ':UpdateRemotePlugins' }
+
+"Plug 'scrooloose/syntastic'
+
+"Plug 'valloric/youcompleteme'
+
+call plug#end()
+
+"set statusline+=%#warningmsg#
+"set statusline+=%{SyntasticStatuslineFlag()}
+"set statusline+=%*
+
+"let g:syntastic_always_populate_loc_list = 1
+"let g:syntastic_auto_loc_list = 1
+"let g:syntastic_check_on_open = 1
+"let g:syntastic_check_on_wq = 0
+
+
+"let g:checkpatch_path = "~/kernel/linux-stable/scripts/checkpatch.pl"
+
+"let g:checkpatch_enabled = 1
+
+" set Vim-specific sequences for RGB colors
+let &t_8f = "\<Esc>[38;2;%lu;%lu;%lum"
+let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
+
+if (has("termguicolors"))
+ set termguicolors
+endif
+syntax enable
+colorscheme gruvbox
+
+set encoding=UTF-8
+set number
+set hlsearch
+set incsearch
+set laststatus=2
+
+
+" turn hybrid line numbers on
+:set number relativenumber
+:set nu rnu
+
+"Mappings===============================
+
+"Config fot easymotion
+let g:mapleader=','
+
+"Config NerdTree
+map <C-n> :NERDTreeToggle<CR>
+map <Leader> <Plug>(easymotion-prefix)
+
+"Config Clang-format 
+" map to <Leader>cf in C++ code
+autocmd FileType c,cpp,objc nnoremap <buffer><Leader>cf :<C-u>ClangFormat<CR>
+autocmd FileType c,cpp,objc vnoremap <buffer><Leader>cf :ClangFormat<CR>
+" if you install vim-operator-user
+autocmd FileType c,cpp,objc map <buffer><Leader>x <Plug>(operator-clang-format)
+" Toggle auto formatting:
+nmap <Leader>C :ClangFormatAutoToggle<CR>
+
+
+
+"==============================================
+
+" Terminal Function
+let g:term_buf = 0
+let g:term_win = 0
+function! TermToggle(height)
+    if win_gotoid(g:term_win)
+        hide
+    else
+        botright new
+        exec "resize " . a:height
+        try
+            exec "buffer " . g:term_buf
+        catch
+            call termopen($SHELL, {"detach": 0})
+            let g:term_buf = bufnr("")
+            set nonumber
+            set norelativenumber
+            set signcolumn=no
+        endtry
+        startinsert!
+        let g:term_win = win_getid()
+    endif
+endfunction
+
+
+" Toggle terminal on/off (neovim)
+nnoremap <C-b> :call TermToggle(12)<CR>
+inoremap <C-b> <Esc>:call TermToggle(12)<CR>
+tnoremap <C-b> <C-\><C-n>:call TermToggle(12)<CR>
+
+" Terminal go back to normal mode
+tnoremap <Esc> <C-\><C-n>
+tnoremap :q! <C-\><C-n>:q!<CR>
