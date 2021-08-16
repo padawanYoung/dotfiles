@@ -3,9 +3,9 @@ call plug#begin('~/.vim/plugged')
 Plug 'tpope/vim-fugitive'
 " Plug 'airblade/vim-gitgutter'
 "Quick jump to symbol
-Plug 'justinmk/vim-sneak'
+" Plug 'justinmk/vim-sneak'
 "Ag, Ack grepping
-Plug 'mileszs/ack.vim'
+" Plug 'mileszs/ack.vim'
 " Clang formatter
 Plug 'rhysd/vim-clang-format'
 " Coment tool
@@ -25,6 +25,7 @@ Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}  " We recommend upda
 Plug 'nvim-treesitter/nvim-treesitter-refactor'
 Plug 'neovim/nvim-lspconfig'
 Plug 'hrsh7th/nvim-compe'
+Plug 'L3MON4D3/LuaSnip'
 " Customize buttom line
 Plug 'hoob3rt/lualine.nvim'
 Plug 'folke/tokyonight.nvim'
@@ -33,7 +34,105 @@ Plug 'tversteeg/registers.nvim', { 'branch': 'main' }
 
 Plug 'nvim-lua/plenary.nvim'
 Plug 'lewis6991/gitsigns.nvim'
+
+Plug 'kevinhwang91/nvim-bqf'
+" === Dependencies for 'nvim-bqf' begin
+" if you install fzf as system package like `pacman -S fzf` in ArchLinux,
+" " please comment next line
+Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
+
+Plug 'mhinz/vim-grepper'
+
+aug Grepper
+    au!
+    au User Grepper call setqflist([], 'r',
+                \ {'context': {'bqf': {'pattern_hl': histget('/')}}}) |
+                \ botright copen
+aug END
+
+let g:grepper = {
+            \ 'open': 0,
+            \ 'quickfix': 1,
+            \ 'searchreg': 1,
+            \ 'highlight': 0,
+            \ }
+
+" try `agiw` under word
+nmap ag  <plug>(GrepperOperator)
+xmap ag  <plug>(GrepperOperator)
+" === Dependencies for 'nvim-bqf' end
+
+Plug 'ggandor/lightspeed.nvim'
 call plug#end()
+
+function! ToggleGStatus()
+    if buflisted(bufname('.git/index'))
+        bd .git/index
+    else
+        Gstatus
+    endif
+endfunction
+command ToggleGStatus :call ToggleGStatus()
+nmap <F3> :ToggleGStatus<CR>
+
+
+hi BqfPreviewBorder guifg=#50a14f ctermfg=71
+hi link BqfPreviewRange Search
+
+lua <<EOF
+require'lightspeed'.setup {
+    jump_to_first_match = true,
+    jump_on_partial_input_safety_timeout = 400,
+    -- This can get _really_ slow if the window has a lot of content,
+    -- turn it on only if your machine can always cope with it.
+    highlight_unique_chars = false,
+    grey_out_search_area = true,
+    match_only_the_start_of_same_char_seqs = true,
+    limit_ft_matches = 5,
+    full_inclusive_prefix_key = '<c-x>',
+    -- By default, the values of these will be decided at runtime,
+    -- based on `jump_to_first_match`.
+    labels = nil,
+    cycle_group_fwd_key = nil,
+    cycle_group_bwd_key = nil,
+}
+
+function repeat_ft(reverse)
+    local ls = require'lightspeed'
+    ls.ft['instant-repeat?'] = true
+    ls.ft:to(reverse, ls.ft['prev-t-like?'])
+end
+vim.api.nvim_set_keymap('n', ';', '<cmd>lua repeat_ft(false)<cr>',
+                        {noremap = true, silent = true})
+vim.api.nvim_set_keymap('x', ';', '<cmd>lua repeat_ft(false)<cr>',
+                        {noremap = true, silent = true})
+vim.api.nvim_set_keymap('n', ',', '<cmd>lua repeat_ft(true)<cr>',
+                        {noremap = true, silent = true})
+vim.api.nvim_set_keymap('x', ',', '<cmd>lua repeat_ft(true)<cr>',
+                        {noremap = true, silent = true})
+
+
+require('bqf').setup({
+    auto_enable = true,
+    preview = {
+        win_height = 12,
+        win_vheight = 12,
+        delay_syntax = 80,
+        border_chars = {'┃', '┃', '━', '━', '┏', '┓', '┗', '┛', '█'}
+    },
+    func_map = {
+        vsplit = '',
+        ptogglemode = 'z,',
+        stoggleup = ''
+    },
+    filter = {
+        fzf = {
+            action_for = {['ctrl-s'] = 'split'},
+            extra_opts = {'--bind', 'ctrl-o:toggle-all', '--prompt', '> '}
+        }
+    }
+})
+EOF
 
 lua <<EOF
 
@@ -73,7 +172,7 @@ require'nvim-web-devicons'.setup {
 -- Change the background of lualine_c section for normal mode
 require'lualine'.setup{
     options = {
-        theme = 'tokyonight',
+       theme = 'tokyonight',
    }
 }
 
@@ -124,6 +223,9 @@ for _, lsp in ipairs(servers) do
   }
 end
 
+-- Set completeopt to have a better completion experience
+vim.o.completeopt = 'menuone,noselect'
+
 -- Compe setup
 require'compe'.setup {
   enabled = true;
@@ -142,6 +244,7 @@ require'compe'.setup {
   source = {
     path = true;
     nvim_lsp = true;
+    luasnip = true;
   };
 }
 
@@ -161,18 +264,25 @@ end
 -- Use (s-)tab to:
 --- move to prev/next item in completion menuone
 --- jump to prev/next snippet's placeholder
+local luasnip = require 'luasnip'
+
 _G.tab_complete = function()
   if vim.fn.pumvisible() == 1 then
     return t "<C-n>"
+  elseif luasnip.expand_or_jumpable() then
+    return t '<Plug>luasnip-expand-or-jump'
   elseif check_back_space() then
     return t "<Tab>"
   else
     return vim.fn['compe#complete']()
   end
 end
+
 _G.s_tab_complete = function()
   if vim.fn.pumvisible() == 1 then
     return t "<C-p>"
+  elseif luasnip.jumpable(-1) then
+    return t '<Plug>luasnip-jump-prev'
   else
     return t "<S-Tab>"
   end
@@ -284,11 +394,7 @@ source ~/.config/nvim/plugin/DoxygenToolkit.vim
 
 source ~/.config/nvim/plugin/nerd-commenter-settings.vim
 
-source ~/.config/nvim/plugin/ack-settings.vim
-
 source ~/.config/nvim/plugin/clang-format-settings.vim
-
-source ~/.config/nvim/plugin/vim-sneak-settings.vim
 
 source ~/.config/nvim/plugin/nvim-tree-settings.vim
 
