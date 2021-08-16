@@ -15,6 +15,9 @@ set hlsearch
 set incsearch
 set ignorecase
 set smartcase
+set backspace=indent,eol,start " Allow backspace in insert mode
+set nojoinspaces " No double spaces between sentences
+set splitbelow splitright
 set laststatus=2
 set cursorline
 set scrolloff=8
@@ -47,6 +50,8 @@ set noshowmode
  " \   'gitbranch': 'FugitiveHead'
  " \ },
  " \ }
+
+nnoremap Y y$| " Make Y behave like other capitals
 
 cno <expr>          <cr>             <sid>wrap_cr()
 nno <expr> <silent> n                <sid>wrap_n(1)

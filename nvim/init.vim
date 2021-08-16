@@ -10,6 +10,7 @@ Plug 'tpope/vim-fugitive'
 Plug 'rhysd/vim-clang-format'
 " Coment tool
 Plug 'preservim/nerdcommenter'
+Plug 'axelf4/vim-strip-trailing-whitespace'
 Plug 'm-pilia/vim-ccls'
 
 "====== lua Plugins ======
@@ -58,11 +59,12 @@ let g:grepper = {
             \ }
 
 " try `agiw` under word
-nmap ag  <plug>(GrepperOperator)
-xmap ag  <plug>(GrepperOperator)
+nmap <leader>s  <plug>(GrepperOperator)
+xmap <leader>s  <plug>(GrepperOperator)
 " === Dependencies for 'nvim-bqf' end
 
 Plug 'ggandor/lightspeed.nvim'
+
 call plug#end()
 
 function! ToggleGStatus()
@@ -341,11 +343,11 @@ require("nvim-autopairs.completion.compe").setup({
 
 require('gitsigns').setup {
   signs = {
-    add          = {hl = 'GitSignsAdd'   , text = '│', numhl='GitSignsAddNr'   , linehl='GitSignsAddLn'},
-    change       = {hl = 'GitSignsChange', text = '│', numhl='GitSignsChangeNr', linehl='GitSignsChangeLn'},
-    delete       = {hl = 'GitSignsDelete', text = '_', numhl='GitSignsDeleteNr', linehl='GitSignsDeleteLn'},
-    topdelete    = {hl = 'GitSignsDelete', text = '‾', numhl='GitSignsDeleteNr', linehl='GitSignsDeleteLn'},
-    changedelete = {hl = 'GitSignsChange', text = '~', numhl='GitSignsChangeNr', linehl='GitSignsChangeLn'},
+      add          = {hl = 'GitSignsAdd'   , text = '┃'},
+      change       = {hl = 'GitSignsChange', text = '┃'},
+      changedelete = {hl = 'GitSignsChange', text = '┃'},
+      delete       = {hl = 'GitSignsDelete', text = '┃'},
+      topdelete    = {hl = 'GitSignsDelete', text = '┃'},
   },
   numhl = false,
   linehl = false,
@@ -397,5 +399,3 @@ source ~/.config/nvim/plugin/nerd-commenter-settings.vim
 source ~/.config/nvim/plugin/clang-format-settings.vim
 
 source ~/.config/nvim/plugin/nvim-tree-settings.vim
-
-source ~/.config/nvim/plugin/remove_trailing_whitespaces.vim
