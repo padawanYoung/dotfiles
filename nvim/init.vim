@@ -2,8 +2,7 @@ call plug#begin('~/.vim/plugged')
 "Git
 Plug 'tpope/vim-fugitive'
 " Plug 'airblade/vim-gitgutter'
-"Quick jump to symbol
-" Plug 'justinmk/vim-sneak'
+"Quick jump to symbol Plug 'justinmk/vim-sneak'
 "Ag, Ack grepping
 " Plug 'mileszs/ack.vim'
 " Clang formatter
@@ -12,6 +11,7 @@ Plug 'rhysd/vim-clang-format'
 Plug 'preservim/nerdcommenter'
 Plug 'axelf4/vim-strip-trailing-whitespace'
 Plug 'm-pilia/vim-ccls'
+Plug 'christoomey/vim-tmux-navigator'
 
 "====== lua Plugins ======
 "File manager
@@ -27,22 +27,33 @@ Plug 'nvim-treesitter/nvim-treesitter-refactor'
 Plug 'neovim/nvim-lspconfig'
 Plug 'hrsh7th/nvim-compe'
 Plug 'L3MON4D3/LuaSnip'
+" Plug 'akinsho/bufferline.nvim'
+Plug 'alvarosevilla95/luatab.nvim'
 " Customize buttom line
 Plug 'hoob3rt/lualine.nvim'
+" Plug 'glepnir/galaxyline.nvim' , {'branch': 'main'}
 Plug 'folke/tokyonight.nvim'
-
-Plug 'tversteeg/registers.nvim', { 'branch': 'main' }
-
+Plug 'ishan9299/modus-theme-vim'
+Plug 'rktjmp/lush.nvim'
+Plug 'ellisonleao/gruvbox.nvim'
+" Plug 'tversteeg/registers.nvim', { 'branch': 'main' }
 Plug 'nvim-lua/plenary.nvim'
 Plug 'lewis6991/gitsigns.nvim'
+" Plug 'ggandor/lightspeed.nvim'
+" Plug 'phaazon/hop.nvim'
+Plug 'mfussenegger/nvim-dap'
+Plug 'rcarriga/nvim-dap-ui'
 
 Plug 'kevinhwang91/nvim-bqf'
-" === Dependencies for 'nvim-bqf' begin
+" =============================== Dependencies for 'nvim-bqf' begin
 " if you install fzf as system package like `pacman -S fzf` in ArchLinux,
 " " please comment next line
 Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
 
 Plug 'mhinz/vim-grepper'
+
+" =============================== Dependencies for 'nvim-bqf' end
+call plug#end()
 
 aug Grepper
     au!
@@ -56,24 +67,24 @@ let g:grepper = {
             \ 'quickfix': 1,
             \ 'searchreg': 1,
             \ 'highlight': 0,
+            \ 'tools': [ 'rg', 'ag', 'git' ]
             \ }
 
-" try `agiw` under word
-nmap <leader>s  <plug>(GrepperOperator)
-xmap <leader>s  <plug>(GrepperOperator)
-" === Dependencies for 'nvim-bqf' end
+" try `gsiw` under word
+nmap gs  <plug>(GrepperOperator)
+xmap gs  <plug>(GrepperOperator)
 
-Plug 'ggandor/lightspeed.nvim'
-
-call plug#end()
+hi BqfPreviewBorder guifg=#50a14f ctermfg=71
+hi link BqfPreviewRange Search
 
 function! ToggleGStatus()
     if buflisted(bufname('.git/index'))
         bd .git/index
     else
-        Gstatus
+        Git
     endif
 endfunction
+
 command ToggleGStatus :call ToggleGStatus()
 nmap <F3> :ToggleGStatus<CR>
 
@@ -82,38 +93,6 @@ hi BqfPreviewBorder guifg=#50a14f ctermfg=71
 hi link BqfPreviewRange Search
 
 lua <<EOF
-require'lightspeed'.setup {
-    jump_to_first_match = true,
-    jump_on_partial_input_safety_timeout = 400,
-    -- This can get _really_ slow if the window has a lot of content,
-    -- turn it on only if your machine can always cope with it.
-    highlight_unique_chars = false,
-    grey_out_search_area = true,
-    match_only_the_start_of_same_char_seqs = true,
-    limit_ft_matches = 5,
-    full_inclusive_prefix_key = '<c-x>',
-    -- By default, the values of these will be decided at runtime,
-    -- based on `jump_to_first_match`.
-    labels = nil,
-    cycle_group_fwd_key = nil,
-    cycle_group_bwd_key = nil,
-}
-
-function repeat_ft(reverse)
-    local ls = require'lightspeed'
-    ls.ft['instant-repeat?'] = true
-    ls.ft:to(reverse, ls.ft['prev-t-like?'])
-end
-vim.api.nvim_set_keymap('n', ';', '<cmd>lua repeat_ft(false)<cr>',
-                        {noremap = true, silent = true})
-vim.api.nvim_set_keymap('x', ';', '<cmd>lua repeat_ft(false)<cr>',
-                        {noremap = true, silent = true})
-vim.api.nvim_set_keymap('n', ',', '<cmd>lua repeat_ft(true)<cr>',
-                        {noremap = true, silent = true})
-vim.api.nvim_set_keymap('x', ',', '<cmd>lua repeat_ft(true)<cr>',
-                        {noremap = true, silent = true})
-
-
 require('bqf').setup({
     auto_enable = true,
     preview = {
@@ -174,9 +153,28 @@ require'nvim-web-devicons'.setup {
 -- Change the background of lualine_c section for normal mode
 require'lualine'.setup{
     options = {
-       theme = 'tokyonight',
+       theme = 'auto',
+   },
+   sections = {
+      lualine_c = {
+        {
+          'filename',
+          file_status = true,   -- displays file status (readonly status, modified status)
+          path = 1,             -- 0 = just filename, 1 = relative path, 2 = absolute path
+          shorting_target = 40, -- Shortens path to leave 40 space in the window
+                                -- for other components. Terrible name any suggestions?
+          symbols = {
+            modified = '[+]',      -- when the file was modified
+            readonly = '[-]',      -- if the file is not modifiable or readonly
+            unnamed = '[No Name]', -- default display name for unnamed buffers
+          }
+        }
    }
 }
+}
+
+-- require("bufferline").setup{}
+require('luatab').setup{}
 
 -- LSP config
 local nvim_lsp = require('lspconfig')
@@ -198,7 +196,7 @@ local on_attach = function(client, bufnr)
   buf_set_keymap('n', 'gd', '<Cmd>lua vim.lsp.buf.definition()<CR>', opts)
   buf_set_keymap('n', 'K', '<Cmd>lua vim.lsp.buf.hover()<CR>', opts)
   buf_set_keymap('n', 'gi', '<cmd>lua vim.lsp.buf.implementation()<CR>', opts)
-  buf_set_keymap('n', '<C-k>', '<cmd>lua vim.lsp.buf.signature_help()<CR>', opts)
+  buf_set_keymap('n', '<space>k', '<cmd>lua vim.lsp.buf.signature_help()<CR>', opts)
   buf_set_keymap('n', '<space>wa', '<cmd>lua vim.lsp.buf.add_workspace_folder()<CR>', opts)
   buf_set_keymap('n', '<space>wr', '<cmd>lua vim.lsp.buf.remove_workspace_folder()<CR>', opts)
   buf_set_keymap('n', '<space>wl', '<cmd>lua print(vim.inspect(vim.lsp.buf.list_workspace_folders()))<CR>', opts)
@@ -210,12 +208,12 @@ local on_attach = function(client, bufnr)
   buf_set_keymap('n', '[d', '<cmd>lua vim.lsp.diagnostic.goto_prev()<CR>', opts)
   buf_set_keymap('n', ']d', '<cmd>lua vim.lsp.diagnostic.goto_next()<CR>', opts)
   buf_set_keymap('n', '<space>q', '<cmd>lua vim.lsp.diagnostic.set_loclist()<CR>', opts)
-  buf_set_keymap("n", "<space>f", "<cmd>lua vim.lsp.buf.formatting()<CR>", opts)
+  buf_set_keymap("n", '<space>f', '<cmd>lua vim.lsp.buf.formatting()<CR>', opts)
 end
 
 -- Use a loop to conveniently call 'setup' on multiple servers and
 -- map buffer local keybindings when the language server attaches
-local servers = { "jsonls", "pyright", "rust_analyzer", "perlls", "ccls", "cmake", "vimls", "bashls"}
+local servers = { "jsonls", "pyright", "rust_analyzer", "ccls", "perlls", "cmake", "vimls", "bashls"}
 for _, lsp in ipairs(servers) do
   nvim_lsp[lsp].setup {
     on_attach = on_attach,
@@ -299,7 +297,6 @@ vim.api.nvim_set_keymap("s", "<S-Tab>", "v:lua.s_tab_complete()", {expr = true})
 vim.api.nvim_set_keymap('i', '<cr>', 'compe#confirm("<cr>")', { expr = true })
 vim.api.nvim_set_keymap('i', '<c-space>', 'compe#complete()', { expr = true })
 
-
 -- Treesitter
 require'nvim-treesitter.configs'.setup {
   ensure_installed = "maintained", -- one of "all", "maintained" (parsers with maintainers), or a list of languages
@@ -311,12 +308,6 @@ require'nvim-treesitter.configs'.setup {
 require'nvim-treesitter.configs'.setup {
   refactor = {
     highlight_definitions = { enable = true },
-    smart_rename = {
-      enable = true,
-      keymaps = {
-        smart_rename = "grr",
-      },
-    },
     navigation = {
       enable = true,
       keymaps = {
@@ -343,14 +334,16 @@ require("nvim-autopairs.completion.compe").setup({
 
 require('gitsigns').setup {
   signs = {
-      add          = {hl = 'GitSignsAdd'   , text = '┃'},
-      change       = {hl = 'GitSignsChange', text = '┃'},
-      changedelete = {hl = 'GitSignsChange', text = '┃'},
-      delete       = {hl = 'GitSignsDelete', text = '┃'},
-      topdelete    = {hl = 'GitSignsDelete', text = '┃'},
+    add          = {hl = 'GitSignsAdd'   , text = '+', numhl='GitSignsAddNr'   , linehl='GitSignsAddLn'},
+    change       = {hl = 'GitSignsChange', text = '│', numhl='GitSignsChangeNr', linehl='GitSignsChangeLn'},
+    delete       = {hl = 'GitSignsDelete', text = '_', numhl='GitSignsDeleteNr', linehl='GitSignsDeleteLn'},
+    topdelete    = {hl = 'GitSignsDelete', text = '‾', numhl='GitSignsDeleteNr', linehl='GitSignsDeleteLn'},
+    changedelete = {hl = 'GitSignsChange', text = '~', numhl='GitSignsChangeNr', linehl='GitSignsChangeLn'},
   },
-  numhl = false,
-  linehl = false,
+  signcolumn = true,  -- Toggle with `:Gitsigns toggle_signs`
+  numhl      = false, -- Toggle with `:Gitsigns toggle_numhl`
+  linehl     = false, -- Toggle with `:Gitsigns toggle_linehl`
+  word_diff  = false, -- Toggle with `:Gitsigns toggle_word_diff`
   keymaps = {
     -- Default keymap options
     noremap = true,
@@ -365,37 +358,106 @@ require('gitsigns').setup {
     ['v <leader>hr'] = '<cmd>lua require"gitsigns".reset_hunk({vim.fn.line("."), vim.fn.line("v")})<CR>',
     ['n <leader>hR'] = '<cmd>lua require"gitsigns".reset_buffer()<CR>',
     ['n <leader>hp'] = '<cmd>lua require"gitsigns".preview_hunk()<CR>',
-    ['n <leader>hb'] = '<cmd>lua require"gitsigns".blame_line(true)<CR>',
+    ['n <leader>hb'] = '<cmd>lua require"gitsigns".blame_line{full=true}<CR>',
+    ['n <leader>hS'] = '<cmd>lua require"gitsigns".stage_buffer()<CR>',
+    ['n <leader>hU'] = '<cmd>lua require"gitsigns".reset_buffer_index()<CR>',
 
     -- Text objects
     ['o ih'] = ':<C-U>lua require"gitsigns.actions".select_hunk()<CR>',
     ['x ih'] = ':<C-U>lua require"gitsigns.actions".select_hunk()<CR>'
   },
-  watch_index = {
+  watch_gitdir = {
     interval = 1000,
     follow_files = true
   },
-  current_line_blame = false,
-  current_line_blame_delay = 1000,
-  current_line_blame_position = 'eol',
+  attach_to_untracked = true,
+  current_line_blame = false, -- Toggle with `:Gitsigns toggle_current_line_blame`
+  current_line_blame_opts = {
+    virt_text = true,
+    virt_text_pos = 'eol', -- 'eol' | 'overlay' | 'right_align'
+    delay = 1000,
+    ignore_whitespace = false,
+  },
+  current_line_blame_formatter_opts = {
+    relative_time = false
+  },
   sign_priority = 6,
   update_debounce = 100,
   status_formatter = nil, -- Use default
-  word_diff = false,
-  use_internal_diff = true,  -- If luajit is present
+  max_file_length = 40000,
+  preview_config = {
+    -- Options passed to nvim_open_win
+    border = 'single',
+    style = 'minimal',
+    relative = 'cursor',
+    row = 0,
+    col = 1
+  },
+  yadm = {
+    enable = false
+  },
 }
+local dap = require('dap')
+dap.adapters.lldb = {
+  type = 'executable',
+  command = '/usr/bin/lldb-vscode-10', -- adjust as needed
+  name = "lldb"
+}
+
+local dap = require('dap')
+dap.configurations.cpp = {
+  {
+    name = "Launch",
+    type = "lldb",
+    request = "launch",
+    program = function()
+      return vim.fn.input('Path to executable: ', vim.fn.getcwd() .. '/', 'file')
+    end,
+    cwd = '${workspaceFolder}',
+    stopOnEntry = false,
+    args = {},
+
+    -- if you change `runInTerminal` to true, you might need to change the yama/ptrace_scope setting:
+    --
+    --    echo 0 | sudo tee /proc/sys/kernel/yama/ptrace_scope
+    --
+    -- Otherwise you might get the following error:
+    --
+    --    Error on launch: Failed to attach to the target process
+    --
+    -- But you should be aware of the implications:
+    -- https://www.kernel.org/doc/html/latest/admin-guide/LSM/Yama.html
+    runInTerminal = false,
+  },
+}
+
+dap.configurations.c = dap.configurations.cpp
+
+require("dapui").setup()
 
 EOF
 
-source ~/.config/nvim/plugin/telescope-settings.vim
+nnoremap <silent> <F5> :lua require'dap'.continue()<CR>
+nnoremap <silent> <F6> :lua require'dap'.step_over()<CR>
+nnoremap <silent> <F7> :lua require'dap'.step_into()<CR>
+nnoremap <silent> <F8> :lua require'dap'.step_out()<CR>
+nnoremap <silent> <leader>b :lua require'dap'.toggle_breakpoint()<CR>
+nnoremap <silent> <leader>B :lua require'dap'.set_breakpoint(vim.fn.input('Breakpoint condition: '))<CR>
+nnoremap <silent> <leader>lp :lua require'dap'.set_breakpoint(nil, nil, vim.fn.input('Log point message: '))<CR>
+nnoremap <silent> <leader>dr :lua require'dap'.repl.open()<CR>
+nnoremap <silent> <leader>dl :lua require'dap'.run_last()<CR>
 
-source ~/.config/nvim/plugin/style-settings.vim
+" nnoremap <silent>[b :BufferLineCycleNext<CR>
+" nnoremap <silent>b] :BufferLineCyclePrev<CR>
+
+
+source ~/.config/nvim/plugin/settings.vim
 
 " Documentation for code
 source ~/.config/nvim/plugin/DoxygenToolkit.vim
 
 source ~/.config/nvim/plugin/nerd-commenter-settings.vim
 
-source ~/.config/nvim/plugin/clang-format-settings.vim
-
 source ~/.config/nvim/plugin/nvim-tree-settings.vim
+
+source ~/.config/nvim/plugin/mappings.vim
